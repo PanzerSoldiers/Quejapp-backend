@@ -1,41 +1,95 @@
 package com.quejapp.quejapi.service;
 
+import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-
-import java.util.Map;
 
 @Service
 public class ChatService {
 
-    private final String OLLAMA_URL = "http://localhost:11434/api/chat";
+    private final ChatClient chatClient;
+    private final AiToolsService aiToolsService;
+
+    public ChatService(
+            ChatClient.Builder builder,
+            AiToolsService aiToolsService
+    ) {
+
+        this.aiToolsService = aiToolsService;
+
+        this.chatClient = builder.build();
+    }
 
     public String preguntar(String mensaje) {
 
-        try {
-            RestTemplate restTemplate = new RestTemplate();
+        return chatClient.prompt()
 
-            Map<String, Object> request = Map.of(
-                    "model", "queja-bot",
-                    "messages", new Object[] {
-                            Map.of("role", "user", "content", mensaje)
-                    },
-                    "stream", false
-            );
+                .system("""
+                Eres el asistente oficial de QuejaAPP.
+                
+                QuejaAPP es una plataforma de gestión de quejas, usuarios, reportes y administración.
+                
+                Tu comportamiento debe seguir estas reglas estrictamente:
+                
+                1. SOLO puedes responder temas relacionados con:
+                - QuejaAPP
+                - gestión de usuarios
+                - gestión de quejas
+                - reportes
+                - administración
+                - exportaciones CSV
+                - funcionamiento de la aplicación
+                - ayuda al usuario dentro del sistema
+                
+                2. Puedes responder saludos y conversaciones básicas como:
+                - hola
+                - buenos días
+                - gracias
+                - quién eres
+                - qué puedes hacer
+                
+                3. Si el usuario pregunta algo fuera del contexto de QuejaAPP
+                (por ejemplo celebridades, historia, videojuegos, matemáticas,
+                política, medicina, tareas, programación ajena al sistema, etc),
+                debes responder EXACTAMENTE:
+                
+                "No puedo ayudarte con eso. Solo puedo responder temas relacionados con QuejaAPP."
+                
+                4. Nunca inventes información.
+                Si no sabes algo relacionado con la aplicación,
+                indica que no tienes suficiente información.
+                
+                5. Si el usuario solicita acciones administrativas o acciones del sistema,
+                usa las herramientas disponibles.
+                
+                6. Nunca respondas como una IA general.
+                Siempre compórtate como un asistente empresarial interno de QuejaAPP.
+                
+                7. Mantén respuestas claras, cortas y profesionales.
+                
+                8. Siempre responde en español.
+                
+                Ejemplos:
+                
+                Usuario: "Hola"
+                Respuesta: "Hola, soy el asistente oficial de QuejaAPP. ¿En qué puedo ayudarte?"
+                
+                Usuario: "¿Quién eres?"
+                Respuesta: "Soy el asistente oficial de QuejaAPP. Puedo ayudarte con usuarios, quejas, reportes y funciones administrativas."
+                
+                Usuario: "¿Quién es Michael Jackson?"
+                Respuesta: "No puedo ayudarte con eso. Solo puedo responder temas relacionados con QuejaAPP."
+                
+                Usuario: "Crea un usuario administrador"
+                Respuesta:
+                - Debes usar las herramientas disponibles si corresponde.
+                """)
 
-            Map response = restTemplate.postForObject(OLLAMA_URL, request, Map.class);
+                .user(mensaje)
 
-            if (response != null && response.get("message") != null) {
-                Map messageMap = (Map) response.get("message");
-                return messageMap.get("content").toString();
-            }
-            else {
-                return "No pude generar una respuesta 🤖";
-            }
+                .tools(aiToolsService)
 
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "Error al conectar con la IA 🤖";
-        }
+                .call()
+
+                .content();
     }
 }

@@ -17,40 +17,19 @@ public class ChatController {
     }
 
     @PostMapping("/chat")
-    public Map<String, String> chat(@RequestBody Map<String, Object> request) {
+    public Map<String, String> chat(
+            @RequestBody Map<String, Object> request
+    ) {
 
-        String message = request.get("message").toString();
-        String msg = message.toLowerCase();
+        String message =
+                request.get("message").toString();
 
-// 🔒 VALIDACIÓN MÁS FLEXIBLE
-        boolean esTemaQueja =
-                msg.contains("queja") ||
-                        msg.contains("reclamo") ||
-                        msg.contains("problema") ||
-                        msg.contains("estado") ||
-                        msg.contains("reporte") ||
-                        msg.contains("denuncia");
+        String respuesta =
+                chatService.preguntar(message);
 
-        boolean esIdentidadBot =
-                msg.contains("quien") ||
-                        msg.contains("eres") ||
-                        msg.contains("sirves") ||
-                        msg.contains("haces") ||
-                        msg.contains("asistente")||
-                        msg.contains("hola");
-
-        boolean esSistema =
-                msg.contains("app") ||
-                        msg.contains("sistema") ||
-                        msg.contains("plataforma");
-
-        if (!(esTemaQueja || esIdentidadBot || esSistema)) {
-            return Map.of("response",
-                    "Lo siento, solo puedo ayudarte con temas relacionados con la plataforma QuejaAPP.");
-        }
-
-        String respuesta = chatService.preguntar(message);
-
-        return Map.of("response", respuesta);
+        return Map.of(
+                "response",
+                respuesta
+        );
     }
 }
