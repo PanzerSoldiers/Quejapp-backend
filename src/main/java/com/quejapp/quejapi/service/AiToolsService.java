@@ -16,14 +16,17 @@ public class AiToolsService {
 
     private final CsvService csvService;
     private final UserRepository userRepository;
+    private final PendingActionService pendingActionService;
 
     public AiToolsService(
             CsvService csvService,
-            UserRepository userRepository
+            UserRepository userRepository,
+            PendingActionService pendingActionService
     ) {
 
         this.csvService = csvService;
         this.userRepository = userRepository;
+        this.pendingActionService = pendingActionService;
     }
 
     // VALIDAR ADMIN
@@ -114,10 +117,30 @@ public class AiToolsService {
             return "Usuario no encontrado";
         }
 
-        userRepository.delete(usuario.get());
+        Authentication auth =
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication();
 
-        return "Usuario eliminado correctamente";
-    }
+        String admin = auth.getName();
+        if(pendingActionService.tieneAccion(admin)) {
+            return """
+            Ya tienes una acción pendiente.
+            
+            Escribe CONFIRMAR antes de realizar otra acción peligrosa.
+            """;
+                }
+        pendingActionService.guardarAccion(
+                admin,
+                () -> userRepository.delete(usuario.get())
+        );
+
+        return """
+        ⚠️ Acción peligrosa detectada.
+        
+        Escribe CONFIRMAR para eliminar el usuario.
+        """;
+            }
 
     // ACTUALIZAR USUARIO
     @Tool(
