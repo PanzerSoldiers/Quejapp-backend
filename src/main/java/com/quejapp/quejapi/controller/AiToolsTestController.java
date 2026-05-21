@@ -1,4 +1,4 @@
-package com.quejapp.quejapi.controller;
+/*package com.quejapp.quejapi.controller;
 
 import com.quejapp.quejapi.service.AiToolsService;
 
@@ -55,3 +55,4 @@ public class AiToolsTestController {
         );
     }
 }
+*/

@@ -8,6 +8,7 @@ import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import com.quejapp.quejapi.configuration.UserContextHolder;
 
 import java.util.Optional;
 
@@ -32,32 +33,20 @@ public class AiToolsService {
     // VALIDAR ADMIN
     private boolean esAdmin() {
 
-        Authentication auth =
-                SecurityContextHolder
-                        .getContext()
-                        .getAuthentication();
+        String email = UserContextHolder.get();
 
-        String email = auth.getName();
+        if (email == null) return false;
 
-        User user = userRepository
-                .findByEmail(email)
-                .orElse(null);
-
-        if(user == null) {
-            return false;
-        }
-
-        return user.getRole() == Role.ADMINISTRATOR;
+        return userRepository.findByEmail(email)
+                .map(u -> u.getRole() == Role.ADMINISTRATOR)
+                .orElse(false);
     }
 
     // EXPORTAR CSV
-    @Tool(
-            description =
-                    "Exporta todos los usuarios en un archivo CSV"
-    )
+    @Tool(description = "Exportar usuarios a CSV")
     public String exportarUsuariosCSV() {
 
-        if(!esAdmin()) {
+        if (!esAdmin()) {
             return "No autorizado";
         }
 
@@ -65,29 +54,18 @@ public class AiToolsService {
     }
 
     // CREAR USUARIO
-    @Tool(
-            description =
-                    "Crear un nuevo usuario"
-    )
-    public String crearUsuario(
-            String nombre,
-            String apellido,
-            String correo
-    ) {
+    @Tool(description = "Crear usuario en el sistema")
+    public String crearUsuario(String nombre, String apellido, String correo) {
 
-        if(!esAdmin()) {
+        if (!esAdmin()) {
             return "No autorizado";
         }
 
-        Optional<User> existente =
-                userRepository.findByEmail(correo);
-
-        if(existente.isPresent()) {
+        if (userRepository.findByEmail(correo).isPresent()) {
             return "El usuario ya existe";
         }
 
         User user = new User();
-
         user.setFirstname(nombre);
         user.setLastname(apellido);
         user.setEmail(correo);
@@ -96,75 +74,49 @@ public class AiToolsService {
 
         return "Usuario creado correctamente";
     }
-
     // ELIMINAR USUARIO
-    @Tool(
-            description =
-                    "Eliminar un usuario por correo"
-    )
-    public String eliminarUsuario(
-            String correo
-    ) {
+    @Tool(description = "Eliminar usuario por correo")
+    public String eliminarUsuario(String correo) {
 
-        if(!esAdmin()) {
+        if (!esAdmin()) {
             return "No autorizado";
         }
 
-        Optional<User> usuario =
-                userRepository.findByEmail(correo);
+        Optional<User> usuario = userRepository.findByEmail(correo);
 
-        if(usuario.isEmpty()) {
+        if (usuario.isEmpty()) {
             return "Usuario no encontrado";
         }
 
-        Authentication auth =
-                SecurityContextHolder
-                        .getContext()
-                        .getAuthentication();
+        String adminEmail = UserContextHolder.get();
 
-        String admin = auth.getName();
-        if(pendingActionService.tieneAccion(admin)) {
-            return """
-            Ya tienes una acción pendiente.
-            
-            Escribe CONFIRMAR antes de realizar otra acción peligrosa.
-            """;
-                }
+        if (pendingActionService.tieneAccion(adminEmail)) {
+            return "Ya tienes una acción pendiente. Escribe CONFIRMAR.";
+        }
+
         pendingActionService.guardarAccion(
-                admin,
+                adminEmail,
                 () -> userRepository.delete(usuario.get())
         );
 
-        return """
-        ⚠️ Acción peligrosa detectada.
-        
-        Escribe CONFIRMAR para eliminar el usuario.
-        """;
-            }
+        return "⚠️ Escribe CONFIRMAR para eliminar el usuario.";
+    }
 
     // ACTUALIZAR USUARIO
-    @Tool(
-            description =
-                    "Actualizar nombre de usuario"
-    )
-    public String actualizarUsuario(
-            String correo,
-            String nuevoNombre
-    ) {
+    @Tool(description = "Actualizar nombre de usuario")
+    public String actualizarUsuario(String correo, String nuevoNombre) {
 
-        if(!esAdmin()) {
+        if (!esAdmin()) {
             return "No autorizado";
         }
 
-        Optional<User> usuario =
-                userRepository.findByEmail(correo);
+        Optional<User> usuario = userRepository.findByEmail(correo);
 
-        if(usuario.isEmpty()) {
+        if (usuario.isEmpty()) {
             return "Usuario no encontrado";
         }
 
         User user = usuario.get();
-
         user.setFirstname(nuevoNombre);
 
         userRepository.save(user);

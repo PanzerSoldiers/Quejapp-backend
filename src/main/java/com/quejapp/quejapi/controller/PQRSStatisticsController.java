@@ -2,7 +2,9 @@ package com.quejapp.quejapi.controller;
 
 import com.quejapp.quejapi.dto.PQRSStatisticsDTO;
 import com.quejapp.quejapi.model.Complaint;
+import com.quejapp.quejapi.model.User;
 import com.quejapp.quejapi.repository.ComplaintRepository;
+import com.quejapp.quejapi.repository.UserRepository;
 import com.quejapp.quejapi.service.PQRSStatisticsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -34,17 +36,28 @@ public class PQRSStatisticsController {
     public class ReporteController {
 
         private final ComplaintRepository complaintRepository;
+        private final UserRepository userRepository;
 
-        public ReporteController(ComplaintRepository complaintRepository) {
+        public ReporteController(ComplaintRepository complaintRepository, UserRepository userRepository) {
             this.complaintRepository = complaintRepository;
+            this.userRepository = userRepository;
         }
 
-        @GetMapping
+        @GetMapping("/complaints")
         public List<Complaint> obtenerTodas() {
             return complaintRepository.findAll();
+        }
+
+        @GetMapping("/users")
+        public List<User> obtenerUsuarios() {
+            return userRepository.findAll();
         }
     }
 
 }
-
+/*
+        @GetMapping
+        public List<Complaint> obtenerTodas() {
+            return complaintRepository.findAll();
+        }*/
 

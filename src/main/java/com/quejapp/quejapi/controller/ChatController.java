@@ -7,7 +7,8 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "*")
+@CrossOrigin( origins = "http://localhost:4200", allowCredentials = "true")
+
 public class ChatController {
 
     private final ChatService chatService;

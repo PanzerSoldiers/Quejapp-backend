@@ -100,11 +100,20 @@ public class PQRSStatisticsService {
                                 1, "En Proceso",
                                 2, "Resuelta",
                                 3, "Cerrada");
-
                 return complaints.stream()
-                                .collect(Collectors.groupingBy(
-                                                c -> statusNames.getOrDefault(c.getStatus(), "Desconocido"),
-                                                Collectors.counting()));
+                        .collect(Collectors.groupingBy(
+                                c -> {
+
+                                        Integer status = c.getStatus();
+
+                                        if (status == null) {
+                                                return "Desconocido";
+                                        }
+
+                                        return statusNames.getOrDefault(status, "Desconocido");
+                                },
+                                Collectors.counting()
+                        ));
         }
 
         private Map<String, Long> groupByType(List<Complaint> complaints) {
@@ -116,9 +125,19 @@ public class PQRSStatisticsService {
                                 4, "Felicitación");
 
                 return complaints.stream()
-                                .collect(Collectors.groupingBy(
-                                                c -> typeNames.getOrDefault(c.getType(), "Otro"),
-                                                Collectors.counting()));
+                        .collect(Collectors.groupingBy(
+                                c -> {
+
+                                        Integer type = c.getType();
+
+                                        if (type == null) {
+                                                return "Otro";
+                                        }
+
+                                        return typeNames.getOrDefault(type, "Otro");
+                                },
+                                Collectors.counting()
+                        ));
         }
 
         private Map<String, Long> groupByCategory(List<Complaint> complaints) {
@@ -134,9 +153,18 @@ public class PQRSStatisticsService {
                                 8, "Otros");
 
                 return complaints.stream()
-                                .collect(Collectors.groupingBy(
-                                                c -> categoryNames.getOrDefault(c.getCategory(), "Sin Categoría"),
-                                                Collectors.counting()));
+                        .collect(Collectors.groupingBy(
+                                c -> {
+                                        Integer category = c.getCategory();
+
+                                        if (category == null) {
+                                                return "Sin Categoría";
+                                        }
+
+                                        return categoryNames.getOrDefault(category, "Sin Categoría");
+                                },
+                                Collectors.counting()
+                        ));
         }
 
         private Double calculateAverageResolutionDays(List<Complaint> complaints) {
