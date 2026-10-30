@@ -105,7 +105,7 @@ public class SecurityConfiguration {
         // Orígenes permitidos (frontend)
         configuration.setAllowedOrigins(Arrays.asList(
                 "http://localhost:4200",
-                "https://quejapp-client.vercel.app"));
+                "https://quejapp-frontend.vercel.app/"));
 
         // Métodos HTTP permitidos
         configuration.setAllowedMethods(Arrays.asList(
